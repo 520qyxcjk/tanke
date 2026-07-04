@@ -4,7 +4,8 @@
       "Bash(node -e ' *)",
       "Bash(git add *)",
       "Bash(git commit -m 'fix: game loop crashes on frame 1 due to empty state.map *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git commit -m 'fix: 关卡过渡死锁 — 打完敌人后卡死 *)"
     ]
   }
 }

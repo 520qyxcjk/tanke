@@ -257,6 +257,7 @@ const state={
   explosions:[],
   map:createEmptyMap(),
   baseAlive:true,
+  transitioning:false,
   keys:{},
   frame:0,
   // per-level difficulty (set by loadLevel)
@@ -688,25 +689,24 @@ function update(){
   updateExplosions();
 
   // --- check win condition ---
-  if(state.enemiesRemaining<=0&&state.enemiesOnMap<=0&&state.player&&state.player.alive){
-    // next wave
+  if(!state.transitioning&&state.enemiesRemaining<=0&&state.enemiesOnMap<=0&&state.player&&state.player.alive){
+    state.transitioning=true;
     if(state.wave<LEVELS.length){
-      setTimeout(()=>{
-        if(state.phase==='playing'){
-          state.wave++;
-          loadLevel(state.wave-1);
-          state.enemies=[];
-          state.bullets=[];
-          state.explosions=[];
-          state.enemiesOnMap=0;
-          state.enemiesRemaining=LEVELS[state.wave-1].enemyCount;
-          state.spawnTimer=60;
-          spawnPlayer();
-          waveDisplay.textContent=state.wave+' · '+LEVELS[state.wave-1].name;
-        }
-      },1500);
       state.phase='paused';
-      setTimeout(()=>{if(state.phase==='paused')state.phase='playing';},1500);
+      setTimeout(()=>{
+        state.wave++;
+        loadLevel(state.wave-1);
+        state.enemies=[];
+        state.bullets=[];
+        state.explosions=[];
+        state.enemiesOnMap=0;
+        state.enemiesRemaining=LEVELS[state.wave-1].enemyCount;
+        state.spawnTimer=60;
+        spawnPlayer();
+        waveDisplay.textContent=state.wave+' · '+LEVELS[state.wave-1].name;
+        state.phase='playing';
+        state.transitioning=false;
+      },1500);
     }else{
       victory();
     }
