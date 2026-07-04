@@ -73,7 +73,7 @@ canvas#gameCanvas{
     <h1>⚔ 坦克大战</h1>
     <div class="info"><label>🏆 得分</label><div class="value" id="scoreDisplay">0</div></div>
     <div class="info"><label>❤️ 生命</label><div class="value lives" id="livesDisplay">◆◆◆</div></div>
-    <div class="info"><label>🌊 波次</label><div class="value wave" id="waveDisplay">1</div></div>
+    <div class="info"><label>🌊 波次</label><div class="value wave" id="waveDisplay">1 · 入门</div></div>
     <div class="info"><label>👾 剩余敌人</label><div class="value enemy-count" id="enemyDisplay">0</div></div>
     <button class="btn" id="startBtn">🎮 开始游戏</button>
     <div class="controls">
@@ -106,12 +106,8 @@ const TANK_SIZE=34;
 const HALF_TANK=TANK_SIZE>>1;
 const BULLET_SIZE=6;
 const PLAYER_SPEED=2.2;
-const ENEMY_SPEED=1.2;
 const BULLET_SPEED=4.5;
 const PLAYER_FIRE_CD=15;
-const ENEMY_FIRE_CD=40;
-const MAX_ENEMIES_ON_MAP=4;
-const SPAWN_DELAY=120;
 const SCORE_ENEMY=100;
 
 const DIR={UP:0,RIGHT:1,DOWN:2,LEFT:3};
@@ -121,102 +117,129 @@ const DY=[-1,0,1,0];
 const EMPTY=0,BRICK=1,STEEL=2;
 
 // ---------- levels ----------
+// Each level controls its own difficulty:
+//   map, enemyCount, enemySpeed, enemyFireCD, spawnDelay, maxEnemies, name
 const LEVELS=[
-  // Level 1 — classic
-  [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,1,1,0,0,1,1,1,1,0,0,1,1,0,0],
-    [0,0,1,1,0,0,1,1,1,1,0,0,1,1,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
-    [0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
-  ],
-  // Level 2 — fortress
-  [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,2,2,0,0,1,1,1,1,0,0,2,2,0,0],
-    [0,0,2,2,0,0,1,1,1,1,0,0,2,2,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
-    [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
-    [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,2,2,0,0,0,0,0,0,0,0,2,2,0,0],
-    [0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
-  ],
-  // Level 3 — open field
-  [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-    [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-    [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
-  ],
-  // Level 4 — maze
-  [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1],
-    [1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,1,0,1,0,1,0,0,0,0,1,0,1,0,1,0],
-    [0,1,0,1,0,1,0,0,0,0,1,0,1,0,1,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,1,0,1,0,1,0,0,0,0,1,0,1,0,1,0],
-    [0,1,0,1,0,1,0,0,0,0,1,0,1,0,1,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1],
-    [0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
-  ],
-  // Level 5 — double trouble
-  [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,2,2,1,1,0,0,0,0,1,1,2,2,0,0],
-    [0,0,2,2,1,1,0,0,0,0,1,1,2,2,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,2,2,1,1,0,0,0,0,1,1,2,2,0,0],
-    [0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
-  ],
+  {
+    // ★ Level 1 — 入门
+    // Very open field, few brick clusters, slow enemies, long spawn delay
+    name:'入门',
+    enemyCount:4, enemySpeed:0.7, enemyFireCD:70, spawnDelay:200, maxEnemies:2,
+    map:[
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0],
+      [0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+  },
+  {
+    // ★★ Level 2 — 简单
+    // More brick clusters, still slow enemies
+    name:'简单',
+    enemyCount:6, enemySpeed:0.9, enemyFireCD:55, spawnDelay:160, maxEnemies:3,
+    map:[
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
+      [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0],
+      [0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0],
+      [0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+  },
+  {
+    // ★★★ Level 3 — 中等
+    // Steel walls introduced, more enemies
+    name:'中等',
+    enemyCount:8, enemySpeed:1.1, enemyFireCD:45, spawnDelay:130, maxEnemies:3,
+    map:[
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,2,2,0,0,1,1,1,1,0,0,2,2,0,0],
+      [0,0,2,2,0,0,1,1,1,1,0,0,2,2,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
+      [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+  },
+  {
+    // ★★★★ Level 4 — 困难
+    // Dense walls, mix of brick and steel, fast enemies
+    name:'困难',
+    enemyCount:10, enemySpeed:1.3, enemyFireCD:38, spawnDelay:100, maxEnemies:4,
+    map:[
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0],
+      [0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0],
+      [0,0,0,0,0,0,2,2,2,2,0,0,0,0,0,0],
+      [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
+      [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
+      [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+      [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+      [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
+      [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
+      [0,0,0,0,0,0,2,2,2,2,0,0,0,0,0,0],
+      [0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+  },
+  {
+    // ★★★★★ Level 5 — 挑战
+    // Complex maze, steel walls, aggressive enemies
+    name:'挑战',
+    enemyCount:15, enemySpeed:1.5, enemyFireCD:30, spawnDelay:80, maxEnemies:5,
+    map:[
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,2,2,1,1,0,0,0,0,1,1,2,2,0,0],
+      [0,0,2,2,1,1,0,0,0,0,1,1,2,2,0,0],
+      [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+      [1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1],
+      [1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+      [0,0,0,0,2,2,0,0,0,0,2,2,0,0,0,0],
+      [0,0,0,0,2,2,0,0,0,0,2,2,0,0,0,0],
+      [1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+      [1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1],
+      [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+      [0,0,2,2,1,1,0,0,0,0,1,1,2,2,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+  },
 ];
 
 // ---------- game state ----------
@@ -236,8 +259,11 @@ const state={
   baseAlive:true,
   keys:{},
   frame:0,
-  levelComplete:false,
-  showStartText:true,
+  // per-level difficulty (set by loadLevel)
+  enemySpeed:1,
+  enemyFireCD:50,
+  spawnDelay:120,
+  maxEnemiesOnMap:3,
 };
 
 // ---------- DOM refs ----------
@@ -253,8 +279,21 @@ function createEmptyMap(){
 }
 
 function loadLevel(idx){
-  state.map=LEVELS[idx%LEVELS.length].map(r=>[...r]);
+  const level=LEVELS[idx%LEVELS.length];
+  state.map=level.map.map(r=>[...r]);
   state.wave=idx+1;
+  state.enemySpeed=level.enemySpeed;
+  state.enemyFireCD=level.enemyFireCD;
+  state.spawnDelay=level.spawnDelay;
+  state.maxEnemiesOnMap=level.maxEnemies;
+  // overlay base fort (brick walls + eagle) on bottom 2 rows
+  const FORT=[
+    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
+  ];
+  for(let r=0;r<2;r++)
+    for(let c=0;c<COLS;c++)
+      if(FORT[r][c])state.map[ROWS-2+r][c]=FORT[r][c];
 }
 
 function tileAt(col,row){
@@ -271,10 +310,10 @@ function createTank(x,y,dir,isPlayer){
   return {
     x,y,dir,
     w:TANK_SIZE,h:TANK_SIZE,
-    speed:isPlayer?PLAYER_SPEED:ENEMY_SPEED,
+    speed:isPlayer?PLAYER_SPEED:state.enemySpeed,
     alive:true,
     cooldown:0,
-    fireCD:isPlayer?PLAYER_FIRE_CD:ENEMY_FIRE_CD,
+    fireCD:isPlayer?PLAYER_FIRE_CD:state.enemyFireCD,
     isPlayer,
     moveDir:dir,
     moveTimer:0,
@@ -349,7 +388,7 @@ const SPAWN_POINTS=[
 let spawnIdx=0;
 
 function spawnEnemy(){
-  if(state.enemiesRemaining<=0||state.enemiesOnMap>=MAX_ENEMIES_ON_MAP)return null;
+  if(state.enemiesRemaining<=0||state.enemiesOnMap>=state.maxEnemiesOnMap)return null;
   for(let attempt=0;attempt<3;attempt++){
     const sp=SPAWN_POINTS[spawnIdx%SPAWN_POINTS.length];
     spawnIdx++;
@@ -383,7 +422,7 @@ function initGame(){
   spawnIdx=0;
   loadLevel(0);
   spawnPlayer();
-  state.enemiesRemaining=12;
+  state.enemiesRemaining=LEVELS[0].enemyCount;
   state.enemiesOnMap=0;
   state.phase='playing';
   updateAllDisplays();
@@ -477,7 +516,7 @@ function updateBullets(){
           updateScoreDisplay();
           updateEnemyDisplay();
           // try spawning next
-          state.spawnTimer=SPAWN_DELAY;
+          state.spawnTimer=state.spawnDelay;
         }
         break;
       }
@@ -627,9 +666,9 @@ function update(){
   // --- enemy spawn ---
   if(state.enemiesRemaining>0||state.enemiesOnMap>0){
     if(state.spawnTimer>0)state.spawnTimer--;
-    if(state.spawnTimer<=0&&state.enemiesRemaining>0&&state.enemiesOnMap<MAX_ENEMIES_ON_MAP){
+    if(state.spawnTimer<=0&&state.enemiesRemaining>0&&state.enemiesOnMap<state.maxEnemiesOnMap){
       spawnEnemy();
-      state.spawnTimer=SPAWN_DELAY;
+      state.spawnTimer=state.spawnDelay;
     }
   }
 
@@ -660,10 +699,10 @@ function update(){
           state.bullets=[];
           state.explosions=[];
           state.enemiesOnMap=0;
-          state.enemiesRemaining=10+state.wave*2;
+          state.enemiesRemaining=LEVELS[state.wave-1].enemyCount;
           state.spawnTimer=60;
           spawnPlayer();
-          waveDisplay.textContent=state.wave;
+          waveDisplay.textContent=state.wave+' · '+LEVELS[state.wave-1].name;
         }
       },1500);
       state.phase='paused';
@@ -783,9 +822,6 @@ function drawTank(tank,color){
 
   ctx.restore();
 
-  // invulnerability flash (spawn protection)
-  if(!tank.isPlayer&&state.frame%6<3&&state.enemies.includes(tank)&&state.enemies.indexOf(tank)<MAX_ENEMIES_ON_MAP){
-  }
 }
 
 function drawBullets(){
@@ -920,7 +956,7 @@ function updateEnemyDisplay(){enemyDisplay.textContent=state.enemiesRemaining+st
 function updateAllDisplays(){
   updateScoreDisplay();
   updateLivesDisplay();
-  waveDisplay.textContent=state.wave||1;
+  const w=state.wave||1; waveDisplay.textContent=w+' · '+LEVELS[w-1].name;
   updateEnemyDisplay();
 }
 
