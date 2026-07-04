@@ -390,7 +390,7 @@ function initGame(){
 }
 
 function spawnPlayer(){
-  const col=7,row=14;
+  const col=3,row=15;
   const tx=col*TILE+(TILE-TANK_SIZE)/2;
   const ty=row*TILE+(TILE-TANK_SIZE)/2;
   const tank=createTank(tx,ty,DIR.UP,true);
@@ -406,7 +406,7 @@ function respawnPlayer(){
   updateLivesDisplay();
   spawnPlayer();
   // brief invulnerability via spawn animation
-  state.explosions.push(createExplosion(7*TILE,14*TILE,TILE*2));
+  state.explosions.push(createExplosion(3*TILE,15*TILE,TILE*2));
 }
 
 // ---------- bullets ----------
@@ -828,16 +828,10 @@ function drawExplosions(){
 }
 
 function drawHUD(){
-  // base indicator area
+  // semi-transparent overlay on base fort area
   const bx=7*TILE,by=14*TILE;
-  ctx.fillStyle='rgba(0,0,0,0.2)';
+  ctx.fillStyle='rgba(0,0,0,0.15)';
   ctx.fillRect(bx,by,TILE*2,TILE*2);
-  // brick walls beside base
-  if(state.baseAlive){
-    ctx.fillStyle='#8B4513';
-    ctx.fillRect(bx-1,by-1,TILE+2,TILE+2);
-    ctx.fillRect(bx+TILE*2-1,by-1,TILE+2,TILE+2);
-  }
 }
 
 function drawOverlay(text,subtext,color='#e94560'){
